@@ -28,7 +28,9 @@
       dropdownSelector: null,
       minuteStep: 5,
       minView: 'minute',
-      startView: 'day'
+      startView: 'day',
+      todayBtn: '',
+      clearBtn: ''
     })
     .directive('datetimepicker', ['$log', 'dateTimePickerConfig', function datetimepickerDirective($log, defaultConfig) {
 
@@ -50,7 +52,7 @@
       }
 
       var validateConfiguration = function validateConfiguration(configuration) {
-        var validOptions = ['startView', 'minView', 'minuteStep', 'dropdownSelector'];
+        var validOptions = ['startView', 'minView', 'minuteStep', 'dropdownSelector', 'todayBtn', 'clearBtn'];
 
         for (var prop in configuration) {
           //noinspection JSUnfilteredForInLoop
@@ -124,10 +126,15 @@
         '               data-ng-class="{active: dateObject.active, past: dateObject.past, future: dateObject.future, disabled: !dateObject.selectable}" >{{ dateObject.display }}</td>' +
         '       </tr>' +
         '   </tbody>' +
+        '   <tfoot colspan="7" >' +
+        '       <tr><th ng-show="todayBtn" colspan="7" class="today" style="display: table-cell;" data-ng-click="changeToToday(data.nextView)" ><span>今天</span></th></tr>' +
+        '       <tr><th ng-show="clearBtn" colspan="7" class="today" style="display: table-cell;" data-ng-click="clearDate()"><span>清除</span></th></tr>' +
+        '   </tfoot>' +
         '</table></div>',
         scope: {
           onSetTime: '&',
-          beforeRender: '&'
+          beforeRender: '&',
+          onClearDateClick: '&'
         },
         replace: true,
         link: function link(scope, element, attrs, ngModelController) {
@@ -143,6 +150,10 @@
           angular.extend(configuration, defaultConfig, directiveConfig);
 
           validateConfiguration(configuration);
+
+          // today, clear button visiable controll - add by marks.chan.l@gmail.com
+          scope.todayBtn = configuration.todayBtn;
+          scope.clearBtn = configuration.clearBtn;
 
           var startOfDecade = function startOfDecade(unixDate) {
             var startYear = (parseInt(moment.utc(unixDate).year() / 10, 10) * 10);
@@ -387,6 +398,20 @@
               scope.data = result;
             }
           };
+
+            /**
+             * clear date
+             */
+            scope.clearDate = function () {
+                scope.onClearDateClick();
+            }
+
+            /**
+             * set to today
+             */
+            scope.changeToToday = function (nextView) {
+                scope.changeView(nextView, new DateObject({dateValue: getUTCTime()}));
+            }
 
           ngModelController.$render = function $render() {
             scope.changeView(configuration.startView, new DateObject({dateValue: getUTCTime(ngModelController.$viewValue)}));
